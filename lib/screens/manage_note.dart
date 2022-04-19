@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:note_app/screens/home.dart';
 import 'package:note_app/utils/color.dart';
+import 'package:note_app/utils/note_service.dart';
 
 class ManageNote extends StatefulWidget {
   const ManageNote({
@@ -19,12 +21,35 @@ class ManageNote extends StatefulWidget {
 
 class _ManageNoteState extends State<ManageNote> {
   final _formKey = GlobalKey<FormState>();
+  TextEditingController _title = new TextEditingController();
+  TextEditingController _note = new TextEditingController();
+  bool _isLoading = false;
+  bool _isError = false;
+
   @override
   void initState() {
     if (widget.isEdit) {
       //todo
     }
     super.initState();
+  }
+
+  _createNote() {
+    _isLoading = true;
+    NoteService().createNote(_title.text, _note.text).then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
+    }).catchError((_) {
+      setState(() {
+        _isLoading = false;
+        _isError = true;
+      });
+    });
   }
 
   @override
@@ -57,6 +82,7 @@ class _ManageNoteState extends State<ManageNote> {
                       ),
                       const SizedBox(height: 5.0),
                       TextFormField(
+                        controller: _title,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please input title';
@@ -101,6 +127,7 @@ class _ManageNoteState extends State<ManageNote> {
                       ),
                       const SizedBox(height: 5.0),
                       TextFormField(
+                        controller: _note,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please input note';
@@ -144,10 +171,10 @@ class _ManageNoteState extends State<ManageNote> {
                     : TextButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            // If the form is valid, display a snackbar. In the real world,
-                            // you'd often call a server or save the information in a database.
+                            _createNote();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Processing Data')),
+                              const SnackBar(
+                                  content: Text('Note Created successfully!')),
                             );
                           }
                         },

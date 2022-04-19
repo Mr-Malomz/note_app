@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:note_app/models/note_model.dart';
 import 'package:note_app/screens/manage_note.dart';
 import 'package:note_app/utils/color.dart';
 
 class NoteCard extends StatelessWidget {
-  const NoteCard({Key? key}) : super(key: key);
+  const NoteCard({Key? key, required this.note}) : super(key: key);
+
+  final Note note;
 
   @override
   Widget build(BuildContext context) {
@@ -24,19 +27,19 @@ class NoteCard extends StatelessWidget {
               padding: const EdgeInsets.all(18.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    "Call the dentist",
-                    style: TextStyle(
+                    note.title,
+                    style: const TextStyle(
                       color: AppColor.black,
                       fontWeight: FontWeight.w600,
                       fontSize: 16.0,
                     ),
                   ),
-                  SizedBox(height: 9.0),
+                  const SizedBox(height: 9.0),
                   Text(
-                    "Today is scheduled for me to have an apppointment with my dentist...",
-                    style: TextStyle(
+                    note.note,
+                    style: const TextStyle(
                       color: AppColor.grey,
                       fontWeight: FontWeight.normal,
                       fontSize: 16.0,
