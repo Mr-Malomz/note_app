@@ -4,9 +4,11 @@ import 'package:note_app/screens/manage_note.dart';
 import 'package:note_app/utils/color.dart';
 
 class NoteCard extends StatelessWidget {
-  const NoteCard({Key? key, required this.note}) : super(key: key);
+  const NoteCard({Key? key, required this.note, required this.onDelete})
+      : super(key: key);
 
   final Note note;
+  final Function(String) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -58,11 +60,11 @@ class NoteCard extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ManageNote(
-                          title: 'View Note',
-                          isEdit: true,
-                          isView: true,
-                        ),
+                        builder: (context) => ManageNote(
+                            title: 'View Note',
+                            isEdit: true,
+                            isView: true,
+                            id: note.$id),
                       ),
                     );
                   },
@@ -73,17 +75,17 @@ class NoteCard extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ManageNote(
-                          title: 'Edit Note',
-                          isEdit: true,
-                        ),
+                        builder: (context) => ManageNote(
+                            title: 'Edit Note', isEdit: true, id: note.$id),
                       ),
                     );
                   },
                 ),
                 _CustomButton(
                   icon: Icons.delete,
-                  ontap: () {},
+                  ontap: () {
+                    onDelete(note.$id!);
+                  },
                 ),
               ],
             )

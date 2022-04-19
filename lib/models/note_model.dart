@@ -5,11 +5,11 @@ class Note {
 
   Note({this.$id, required this.title, required this.note});
 
-  factory Note.fromJson(Map<String, dynamic> json) {
+  factory Note.fromJson(Map<dynamic, dynamic> json) {
     return Note($id: json['\$id'], title: json['title'], note: json['note']);
   }
 
-  Map<String, dynamic> toJson() {
+  Map<dynamic, dynamic> toJson() {
     return {'title': title, 'note': note};
   }
 }

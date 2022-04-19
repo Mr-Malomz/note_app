@@ -10,10 +10,12 @@ class ManageNote extends StatefulWidget {
     required this.title,
     required this.isEdit,
     this.isView = false,
+    this.id,
   }) : super(key: key);
   final String title;
   final bool isEdit;
   final bool isView;
+  final String? id;
 
   @override
   State<ManageNote> createState() => _ManageNoteState();
@@ -21,15 +23,15 @@ class ManageNote extends StatefulWidget {
 
 class _ManageNoteState extends State<ManageNote> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController _title = new TextEditingController();
-  TextEditingController _note = new TextEditingController();
+  final TextEditingController _title = TextEditingController();
+  final TextEditingController _note = TextEditingController();
   bool _isLoading = false;
   bool _isError = false;
 
   @override
   void initState() {
-    if (widget.isEdit) {
-      //todo
+    if (widget.isEdit || widget.isView) {
+      _getANote();
     }
     super.initState();
   }
@@ -40,6 +42,9 @@ class _ManageNoteState extends State<ManageNote> {
       setState(() {
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note Created successfully!')),
+      );
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const Home()),
@@ -49,6 +54,49 @@ class _ManageNoteState extends State<ManageNote> {
         _isLoading = false;
         _isError = true;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error creating Note!')),
+      );
+    });
+  }
+
+  _getANote() {
+    _isLoading = true;
+    NoteService().getANote(widget.id!).then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+      _title.text = value.title;
+      _note.text = value.note;
+    }).catchError((_) {
+      setState(() {
+        _isLoading = false;
+        _isError = true;
+      });
+    });
+  }
+
+  _updateNote() {
+    _isLoading = true;
+    NoteService().updateNote(_title.text, _note.text, widget.id!).then((value) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note Updated successfully!')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
+    }).catchError((_) {
+      setState(() {
+        _isLoading = false;
+        _isError = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error updating Note!')),
+      );
     });
   }
 
@@ -62,139 +110,168 @@ class _ManageNoteState extends State<ManageNote> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 30.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //title
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Title',
-                        style: TextStyle(
-                          color: AppColor.grey,
-                          fontSize: 14.0,
-                        ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                color: AppColor.primary,
+              ))
+            : _isError
+                ? const Center(
+                    child: Text(
+                      'Error loading notes',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 5.0),
-                      TextFormField(
-                        controller: _title,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please input title';
-                          }
-                          return null;
-                        },
-                        readOnly: widget.isView,
-                        inputFormatters: [LengthLimitingTextInputFormatter(25)],
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 20),
-                          hintText: "enter title",
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColor.grey),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColor.grey),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.red),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  )
+                : Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            //title
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Title',
+                                  style: TextStyle(
+                                    color: AppColor.grey,
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 5.0),
+                                TextFormField(
+                                  controller: _title,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please input title';
+                                    }
+                                    return null;
+                                  },
+                                  readOnly: widget.isView,
+                                  inputFormatters: [
+                                    LengthLimitingTextInputFormatter(25)
+                                  ],
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 20),
+                                    hintText: "enter title",
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.grey),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.grey),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide:
+                                          const BorderSide(color: Colors.red),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
 
-                  const SizedBox(height: 30.0),
+                            const SizedBox(height: 30.0),
 
-                  //Note
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Note',
-                        style: TextStyle(
-                          color: AppColor.grey,
-                          fontSize: 14.0,
+                            //Note
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Note',
+                                  style: TextStyle(
+                                    color: AppColor.grey,
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 5.0),
+                                TextFormField(
+                                  controller: _note,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please input note';
+                                    }
+                                    return null;
+                                  },
+                                  readOnly: widget.isView,
+                                  inputFormatters: [
+                                    LengthLimitingTextInputFormatter(70)
+                                  ],
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 20),
+                                    hintText: "enter note",
+                                    fillColor: Colors.white,
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.grey),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.grey),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide:
+                                          const BorderSide(color: Colors.red),
+                                    ),
+                                  ),
+                                  minLines: 6,
+                                  keyboardType: TextInputType.multiline,
+                                  maxLines: null,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 5.0),
-                      TextFormField(
-                        controller: _note,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please input note';
-                          }
-                          return null;
-                        },
-                        readOnly: widget.isView,
-                        inputFormatters: [LengthLimitingTextInputFormatter(70)],
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 20),
-                          hintText: "enter note",
-                          fillColor: Colors.white,
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColor.grey),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: AppColor.grey),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.red),
-                          ),
+                        const SizedBox(height: 30.0),
+                        SizedBox(
+                          height: 45,
+                          width: double.infinity,
+                          child: widget.isView
+                              ? const SizedBox()
+                              : TextButton(
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () {
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            if (widget.isEdit) {
+                                              _updateNote();
+                                            } else {
+                                              _createNote();
+                                            }
+                                          }
+                                        },
+                                  style: ButtonStyle(
+                                    backgroundColor:
+                                        MaterialStateProperty.all<Color>(
+                                            AppColor.primary),
+                                  ),
+                                  child: const Text(
+                                    'Save',
+                                    style: TextStyle(
+                                      color: AppColor.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.0,
+                                    ),
+                                  ),
+                                ),
                         ),
-                        minLines: 6,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: null,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 30.0),
-              SizedBox(
-                height: 45,
-                width: double.infinity,
-                child: widget.isView
-                    ? const SizedBox()
-                    : TextButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _createNote();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Note Created successfully!')),
-                            );
-                          }
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              AppColor.primary),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(
-                            color: AppColor.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.0,
-                          ),
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -40,6 +40,20 @@ class _HomeState extends State<Home> {
     });
   }
 
+  _deleteNote(String id) {
+    NoteService().deleteNote(id).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note Deleted successfully!')),
+      );
+      Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (BuildContext context) => super.widget));
+    }).catchError((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error deleting Note!')),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +80,7 @@ class _HomeState extends State<Home> {
               : ListView.builder(
                   itemCount: notes?.length,
                   itemBuilder: (context, index) {
-                    return NoteCard(note: notes![index]);
+                    return NoteCard(note: notes![index], onDelete: _deleteNote);
                   },
                 ),
       floatingActionButton: FloatingActionButton(
